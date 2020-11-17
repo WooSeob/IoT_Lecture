@@ -14,11 +14,12 @@ typedef struct Point{
     CoordValue Y;
 } Point;
 
+
 #define DOT_SIZE 8
 
 void DOT_Draw_Line(Line * line);
 
 // test
-void Generate_Hex_Code(RowBits* Frame, Point *points, int len);
+void Generate_Hex_Code(RowBits *Frame, Point *points, int len);
 
 void showBinary(RowBits binary);
