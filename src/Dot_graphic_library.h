@@ -16,6 +16,7 @@ typedef struct Points
     char len;
 
     Point left_top;
+    Point right_bottom;
     CoordValue width;
     CoordValue height;
 } Points;
@@ -35,7 +36,7 @@ typedef struct Circle
 typedef struct Drawable
 {
     char type;
-    Point *Points;
+    Points *Points;
     Line *line;
     Circle *circle;
 } Drawable;
@@ -67,6 +68,13 @@ typedef struct RenderQueue{
         {0, 0, 0, 0, 0, 0, 0, 0},\
     }\
 
+void MovePoints(Points *pointGroup, CoordValue offsetX, CoordValue offsetY);
+void SetPoints(Points *pointGroup);
+
+int isX_Out(CoordValue x);
+int isY_Out(CoordValue y);
+int isInBound(CoordValue x, CoordValue y);
+
 void DOT_Draw_Points(Point points[], int len);
 void DOT_Draw_Circle(Circle *circle);
 void DOT_Draw_Line(Line *line);
@@ -77,14 +85,13 @@ void DOT_Draw_Canvas(RenderQueue *renderQueue);
 void Generate_Hex_Code(RowBits *Frame, char points[][DOT_SIZE]);
 void showBinary(RowBits binary);
 
+void MappingPointsToDotMatrix(char MappedPoints[][DOT_SIZE], Points* pointGroup);
+void MappingPointsToDotMatrix(char MappedPoints[][DOT_SIZE], Points* pointGroup);
 void MappingLineToDotMatrix(char MappedPoints[][DOT_SIZE], Line *line);
 void MappingCircleToDotMatrix(char MappedPoints[][DOT_SIZE], Circle *circle);
+
 void RenderingFrame(RowBits *Frames);
 
 void WriteToConsole(RowBits *Frame);
 void WriteToDot(RowBits *Frame);
 
-void MoveNext (RenderQueue* list);
-void InsertFront (RenderQueue* list, const Drawable* x);
-void Initialize (RenderQueue* list); 
-void Clear (RenderQueue* list); 

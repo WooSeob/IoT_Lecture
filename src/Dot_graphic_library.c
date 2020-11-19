@@ -9,7 +9,66 @@
 #define dot_dev "/dev/dot"
 
 #include "Dot_graphic_library.h"
+#include "Lib.h"
 
+int dot_fd = 0;
+
+void init(){
+    dot_fd = open(dot_dev, O_RDWR);
+    if (dot_fd < 0)
+    {
+        printf("Can't Open Device\n");
+    }
+}
+
+void MovePoints(Points *pointGroup, CoordValue offsetX, CoordValue offsetY){
+    int i;
+    Point *P = pointGroup->points;
+
+    for(i = 0; i < pointGroup->len; i++){
+        P[i].X += offsetX;
+        P[i].Y += offsetY;
+    }
+    Point lt = pointGroup->left_top;
+    lt.X += offsetX;
+    lt.Y += offsetY;
+    pointGroup->left_top = lt;
+
+    Point rb = pointGroup->right_bottom;
+    rb.X += offsetX;
+    rb.Y += offsetY;
+    pointGroup->right_bottom = rb;
+}
+
+void SetPoints(Points *pointGroup){
+    int i;
+    int Xmax = 0, Xmin = DOT_SIZE, Ymax = 0, Ymin = DOT_SIZE;
+
+    Point *P = pointGroup->points;
+
+    for(i = 0; i < pointGroup->len; i++){
+        if(Xmax < P[i].X){
+            Xmax = P[i].X;
+        }
+        if(Xmin > P[i].X){
+            Xmin = P[i].X;
+        }
+        if(Ymax > P[i].Y){
+            Ymax = P[i].Y;
+        }
+        if(Ymin > P[i].Y){
+            Ymin = P[i].Y;
+        }
+    }
+    
+    pointGroup->width = Xmax - Xmin;
+    pointGroup->height = Ymax - Ymin;
+
+    Point lt = {.X = Xmin, .Y = Ymin};
+    pointGroup->left_top = lt;
+    Point rb = {.X = Xmax, .Y = Ymax};
+    pointGroup->right_bottom = rb;
+}
 // To Abstraction Application <-> 8x8 Dot Matrix
 void DOT_Draw_Canvas(RenderQueue *renderQueue)
 {
@@ -19,17 +78,11 @@ void DOT_Draw_Canvas(RenderQueue *renderQueue)
     while (renderQueue->cur != NULL)
     {
         Drawable D = renderQueue->cur->value;
-        printf("draw %d\n", D.type);
 
         switch (D.type)
         {
         case TYPE_Points:
-            // int i = 0;
-            // for (i = 0; i < ; i++)
-            // {
-            //     Point p = D.Points[i];
-            //     MappedPoints[p.Y][p.X] = 1;
-            // }
+            MappingPointsToDotMatrix(MappedPoints, D.Points);
             break;
 
         case TYPE_Line:
@@ -37,11 +90,11 @@ void DOT_Draw_Canvas(RenderQueue *renderQueue)
             break;
 
         case TYPE_Circle:
-            /* code */
             MappingCircleToDotMatrix(MappedPoints, D.circle);    
             break;
 
         default:
+            printf("Drawble Type invalid! : %d\n", D.type);
             break;
         }
         
@@ -50,67 +103,40 @@ void DOT_Draw_Canvas(RenderQueue *renderQueue)
     //그리기
     Generate_Hex_Code(Frames, MappedPoints);
     RenderingFrame(Frames);
-
     //커서 맨앞자리로 다시 옮겨놓기
     renderQueue->cur = renderQueue->head;
-}
-void DOT_Draw_Points(Point points[], int len)
-{
-    char MappedPoints[DOT_SIZE][DOT_SIZE] = INIT_POINTS;
-    RowBits Frames[DOT_SIZE];
-
-    int i = 0;
-    for (i = 0; i < len; i++)
-    {
-        Point p = points[i];
-        MappedPoints[p.Y][p.X] = 1;
-    }
-
-    Generate_Hex_Code(Frames, MappedPoints);
-
-    RenderingFrame(Frames);
-}
-
-void DOT_Draw_Circle(Circle *circle)
-{
-    char MappedPoints[DOT_SIZE][DOT_SIZE] = INIT_POINTS;
-    RowBits Frames[DOT_SIZE];
-
-    MappingCircleToDotMatrix(MappedPoints, circle);
-    Generate_Hex_Code(Frames, MappedPoints);
-
-    RenderingFrame(Frames);
-}
-
-void DOT_Draw_Line(Line *line)
-{
-    char MappedPoints[DOT_SIZE][DOT_SIZE] = INIT_POINTS;
-    RowBits Frames[DOT_SIZE];
-
-    MappingLineToDotMatrix(MappedPoints, line);
-    Generate_Hex_Code(Frames, MappedPoints);
-
-    RenderingFrame(Frames);
-}
-
-void DOT_Draw_Lines(Line line[], int len)
-{
-    char MappedPoints[DOT_SIZE][DOT_SIZE] = INIT_POINTS;
-    RowBits Frames[DOT_SIZE];
-    int i = 0;
-    for (i = 0; i < len; i++)
-    {
-        MappingLineToDotMatrix(MappedPoints, &line[i]);
-    }
-    Generate_Hex_Code(Frames, MappedPoints);
-
-    RenderingFrame(Frames);
 }
 
 // <--------------------- Private Functions --------------------->
 // 1. Mapping
 // 2. Generate Hex code
 // 3. Rendering with Hex code
+
+int isX_Out(CoordValue x){
+    return x < 0 || x >= DOT_SIZE;
+}
+int isY_Out(CoordValue y){
+    return y < 0 || y >= DOT_SIZE;
+}
+int isInBound(CoordValue x, CoordValue y){
+    // return (x > 0 && x < DOT_SIZE && y > 0 && y < DOT_SIZE);
+    return !isX_Out(x) && !isY_Out(y);
+}
+
+void addMappedPoint(char MappedPoints[][DOT_SIZE], CoordValue x, CoordValue y){
+    if(isInBound(x, y)){
+        MappedPoints[y][x] = 1;
+    }
+}
+
+void MappingPointsToDotMatrix(char MappedPoints[][DOT_SIZE], Points* pointGroup){
+    int i, len = pointGroup->len;
+    
+    for(i=0; i<len; i++){
+        Point p = pointGroup->points[i];
+        addMappedPoint(MappedPoints, p.X, p.Y);
+    }
+}
 
 void MappingLineToDotMatrix(char MappedPoints[][DOT_SIZE], Line *line)
 {
@@ -134,7 +160,7 @@ void MappingLineToDotMatrix(char MappedPoints[][DOT_SIZE], Line *line)
     for (x = lStartX; x <= lStopX; x++)
     {
         int y = D * x + C;
-        MappedPoints[y][x] = 1;
+        addMappedPoint(MappedPoints, x, y);
     }
 
     //# y기준 매핑
@@ -144,7 +170,7 @@ void MappingLineToDotMatrix(char MappedPoints[][DOT_SIZE], Line *line)
     for (y = lStartY; y <= lStopY; y++)
     {
         int x = rD * y + rC;
-        MappedPoints[y][x] = 1;
+        addMappedPoint(MappedPoints, x, y);
     }
 }
 
@@ -161,8 +187,9 @@ void MappingCircleToDotMatrix(char MappedPoints[][DOT_SIZE], Circle *circle)
     {
         int y1 = sqrt(pow(R, 2) - pow((x - Center.X), 2)) + Center.Y;
         int y2 = -sqrt(pow(R, 2) - pow((x - Center.X), 2)) + Center.Y;
-        MappedPoints[y1][x] = 1;
-        MappedPoints[y2][x] = 1;
+        addMappedPoint(MappedPoints, x, y1);
+        addMappedPoint(MappedPoints, x, y2);
+        
     }
 
     //# y기준 매핑
@@ -173,8 +200,8 @@ void MappingCircleToDotMatrix(char MappedPoints[][DOT_SIZE], Circle *circle)
     {
         int x1 = sqrt(pow(R, 2) - pow((y - Center.Y), 2)) + Center.X;
         int x2 = -sqrt(pow(R, 2) - pow((y - Center.Y), 2)) + Center.X;
-        MappedPoints[y][x1] = 1;
-        MappedPoints[y][x2] = 1;
+        addMappedPoint(MappedPoints, x1, y);
+        addMappedPoint(MappedPoints, x2, y);
     }
 }
 
@@ -234,63 +261,8 @@ void WriteToConsole(RowBits *Frame){
     }
     printf("\n");
 }
+
 void WriteToDot(RowBits *Frame)
 {
-    int dot_fd = 0;
-    dot_fd = open(dot_dev, O_RDWR);
-
-    if (dot_fd < 0)
-    {
-        printf("Can't Open Device\n");
-    }
     write(dot_fd, Frame, DOT_SIZE);
 }
-
-
-static Node* AllocNode() {
-	return calloc(1, sizeof(Node));
-}
-
-//n이 가리키는 노드의 각 멤버에 값을 설정
-static void SetNode(Node* n, const Drawable* x, const Node* next) {
-	n->value = *x;
-    n->next = next;
-}
-
-//초기화
-void Initialize (RenderQueue* list) {
-	list->head = NULL;
-    list->cur = NULL;
-}
-
-//머리에 노드 삽입
-void InsertFront (RenderQueue* list, const Drawable* x) {
-	Node* ptr = list->head;
-    list->head = list->cur = AllocNode();
-    SetNode(list->head, x, ptr);
-}
-
-//머리 노드를 삭제
-void RemoveFront (RenderQueue* list) {
-	if(list->head != NULL) {
-    	Node* ptr = list->head->next;
-        free(list->head);
-        list->head = list->cur = ptr;
-    }
-}
-
-void MoveNext (RenderQueue* list){
-    Node * n = list->cur;
-    if(n != NULL){
-        n = n->next;
-        list->cur = n;
-    }
-}
-
-//모든 노드를 삭제
-void Clear (RenderQueue* list) {
-	while(list->head != NULL)
-    	RemoveFront(list);
-    list->cur = NULL;
-}
-
