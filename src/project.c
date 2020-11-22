@@ -16,6 +16,7 @@
 
 #define BEFORE_DOWNLOAD -1000
 #define DOWNLOADING -4000
+#define DOWNLOAD_FAILURE -1
 
 int prevMin = -1;
 int currentMode = MODE_CLOCK;
@@ -96,20 +97,30 @@ void WeatherFunction()
     {
         printf("\nWeather Function, Weather Value : %d \n", WeatherValue);
         if (WeatherValue == BEFORE_DOWNLOAD)
-        { 
-            // 한번도 로딩된적없으면
+        {
+            // 다운로드 시작
             GetWeatherAsync();
         }
         else if (WeatherValue == DOWNLOADING)
         {
+            // 다운로드중
             printf("Weather Data is Downloading...\n");
             read(GET_WEATHER_ASYNC_FD[0], &WeatherValue, sizeof(int));
             printf("read value is %d\n", WeatherValue);
         }
+        else if (WeatherValue == DOWNLOAD_FAILURE)
+        {
+            // 다운로드 실패 -> 재다운로드
+            printf("Weather Data download failure. download retry.\n");
+            WeatherValue = BEFORE_DOWNLOAD;
+        }
         else
         {
+            // 날씨정보 받아오기 성공
             printf("weather is %d\n", WeatherValue);
             // 날씨 애니메이션 출력
+
+            
         }
 
         FrameCount = 0;
