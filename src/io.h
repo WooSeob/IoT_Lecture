@@ -22,7 +22,7 @@ void init_TACTSW();
 void init_DOT();
 
 void PrintToFND(int digit_4);
-void PrintToCLCD(char *string);
+void PrintToCLCD(char *s);
 void PrintToDOT();
 void ScanFromDS();
 unsigned char ScanFromTS();

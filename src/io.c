@@ -107,23 +107,22 @@ void PrintToFND(int digit_4)
     write(FND_FD, Hex_Code, MAXFND);
 }
 
-void PrintToCLCD(char *string)
+void PrintToCLCD(char *s)
 {
     int n;
     char buf[MAXCHR];
     memset(buf, 0, sizeof(buf));
+    printf("buf : %s\n", buf);  
 
-    n = strlen(string);
-
+    n = strlen(s);
     if (n > MAXCHR)
          n = MAXCHR; //plus the newline
-
-    memcpy(buf, string, n);
+    // printf("n : %d\n", n);
     
-    // char buf[MAXCHR] = "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEF";
-    // memset(buf, 0, sizeof(buf));
-
-    printf("%s\n", buf);  
+    memcpy(buf, s, n);
+    // printf("buf : %s\n", buf);  
+    
+    // printf("clcd fd : %d\n", CLCD_FD);
     write(CLCD_FD, buf, MAXCHR);
 }
 
