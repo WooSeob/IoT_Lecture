@@ -15,12 +15,11 @@
 
 int prevMin = -1;
 int currentMode = MODE_CLOCK;
+int FrameCount = 0;
 
 int main(void)
 {
     init_TACTSW();
-
-    int FrameCount = 0;
 
     init_io(currentMode);
     while (True)
@@ -36,58 +35,67 @@ int main(void)
         }
 
         //10Frame(10 * 0.1s) = 1초 마다 기능 실행
-        if (FrameCount > 9)
+        switch (currentMode)
         {
-            FrameCount = 0;
-            switch (currentMode)
-            {
-            case MODE_CLOCK:
-                ClockFunction();
-                break;
+        case MODE_CLOCK:
+            ClockFunction();
+            break;
 
-            case MODE_WHEATHER:
-                WheatherFunction();
-                break;
+        case MODE_WHEATHER:
+            WheatherFunction();
+            break;
 
-            case MODE_TIMER:
-                TimerFunction();
-                break;
+        case MODE_TIMER:
+            TimerFunction();
+            break;
 
-            default:
-                break;
-            }
-        }
-        else
-        {
-            FrameCount++;
+        default:
+            break;
         }
 
-        usleep(100*MS); //100ms = 0.1s
+        usleep(100 * MS); //100ms = 0.1s
     }
-
     return 0;
 }
 
 void ClockFunction()
 {
-    char Message[MAXCHR] = "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEF";
-    PrintToCLCD(Message);
-
-    time_t t = time(NULL);
-    struct tm tm = *localtime(&t);
-
-    if (prevMin != tm.tm_min)
+    if (FrameCount > 9)
     {
-        int Now = tm.tm_hour * 100 + tm.tm_min;
-        PrintToFND(Now);
-        printf("now: %d\n", Now);
-        prevMin = tm.tm_min;
+        FrameCount = 0;
+
+        char Message[MAXCHR] = "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEF";
+        PrintToCLCD(Message);
+
+        time_t t = time(NULL);
+        struct tm tm = *localtime(&t);
+
+        if (prevMin != tm.tm_min)
+        {
+            int Now = tm.tm_hour * 100 + tm.tm_min;
+            PrintToFND(Now);
+            printf("now: %d\n", Now);
+            prevMin = tm.tm_min;
+        }
+    }
+    else
+    {
+        FrameCount++;
     }
 }
 
 void WheatherFunction()
 {
-    printf("Wheather Function\n");
+    if (FrameCount > 9)
+    {
+        FrameCount = 0;
+
+        printf("Wheather Function\n");
+    }
+    else
+    {
+        FrameCount++;
+    }
 }
 
 void TimerFunction()
@@ -105,7 +113,6 @@ void TimerFunction()
     {
         // 4자리수에 각각 입력 될 숫자 입력
         PrintToCLCD(digit);
-
         // 적절한 delay 사용
         iCount = (iCount + 1) % 10000;
     }
