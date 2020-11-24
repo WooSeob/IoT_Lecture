@@ -24,5 +24,6 @@ void init_DOT();
 void PrintToFND(int digit_4);
 void PrintToCLCD(char *s);
 void PrintToDOT();
+void PrintToConsole(int n);
 void ScanFromDS();
 unsigned char ScanFromTS();

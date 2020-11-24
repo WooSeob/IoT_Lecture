@@ -1,5 +1,7 @@
 #include "weather.h"
 
+
+
 int GetWeather()
 {
     int fd[2];
@@ -53,20 +55,27 @@ int GetWeather()
             for (i = 0; i < len; i++)
             {
                 Searched = strchr(ptr, targetTAG[i]);
-                if (Searched != NULL){
-                    if(i == len-1){
+                if (Searched != NULL)
+                {
+                    if (i == len - 1)
+                    {
                         // 찾음
                         // printf("Tag Searched\n");
                         // printf("%s\n", Searched);
 
-                        if(!strcmp(Searched, W_CLEAR)){
+                        if (!strcmp(Searched, W_CLEAR))
+                        {
                             return WEATHER_SUNNY;
-                        }else if(!strcmp(Searched, W_CLOUDY)){
+                        }
+                        else if (!strcmp(Searched, W_CLOUDY))
+                        {
                             return WEATHER_CLOUDY;
                             // ...
                         }
                     }
-                }else{
+                }
+                else
+                {
                     break;
                 }
             }

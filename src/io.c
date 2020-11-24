@@ -130,6 +130,9 @@ void PrintToDOT()
 {
 }
 
+void PrintToConsole(int n){
+    printf("Print : %d\n", n);
+}
 void ScanFromDS()
 {
 }
