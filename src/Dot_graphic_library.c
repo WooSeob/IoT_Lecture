@@ -10,16 +10,17 @@
 
 #include "Dot_graphic_library.h"
 #include "Lib.h"
+#include "io.h"
 
-int dot_fd = 0;
+// int dot_fd = 0;
 
-void init(){
-    dot_fd = open(dot_dev, O_RDWR);
-    if (dot_fd < 0)
-    {
-        printf("Can't Open Device\n");
-    }
-}
+// void init(){
+//     dot_fd = open(dot_dev, O_RDWR);
+//     if (dot_fd < 0)
+//     {
+//         printf("Can't Open Device\n");
+//     }
+// }
 
 void MovePoints(Points *pointGroup, CoordValue offsetX, CoordValue offsetY){
     int i;
@@ -73,7 +74,7 @@ void SetPoints(Points *pointGroup){
 void DOT_Draw_Canvas(RenderQueue *renderQueue)
 {
     char MappedPoints[DOT_SIZE][DOT_SIZE] = INIT_POINTS;
-    RowBits Frames[DOT_SIZE];
+    RowBits Frames[DOT_SIZE] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
     while (renderQueue->cur != NULL)
     {
@@ -264,5 +265,5 @@ void WriteToConsole(RowBits *Frame){
 
 void WriteToDot(RowBits *Frame)
 {
-    write(dot_fd, Frame, DOT_SIZE);
+    PrintToDOT(Frame);
 }

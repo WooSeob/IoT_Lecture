@@ -94,4 +94,3 @@ void RenderingFrame(RowBits *Frames);
 
 void WriteToConsole(RowBits *Frame);
 void WriteToDot(RowBits *Frame);
-

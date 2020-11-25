@@ -1,16 +1,6 @@
-#include <stdio.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <sys/wait.h>
-#include <math.h>
-#include <fcntl.h>
-#include <string.h>
-#include <time.h>
 
 #include "project.h"
-#include "io.h"
-#include "weather.h"
+
 // #include "Dot_graphic_library.h"
 // #include "Lib.h"
 
@@ -20,31 +10,53 @@
 
 #define BEFORE_TIMER_SET -10
 
-int prevMin = -1;
-int currentMode = MODE_CLOCK;
+int prevTime = -1;
+int currentMode = MODE_WEATHER;
 int FrameCount = 0;
 int WeatherValue = BEFORE_DOWNLOAD;
 int GET_WEATHER_ASYNC_FD[2];
+int prevTactSwitchInput = 0;
 
-#define TIMER_OK_COMMAND 11
+#define TIMER_OK_COMMAND 12
 int REMAIN_TIME = BEFORE_TIMER_SET;
 int TIMER_INPUT[4] = {-1, -1, -1, -1};
 
+void init_mode(int mode){
+    restore_output(mode);
+    switch (mode)
+    {
+    case MODE_CLOCK:
+        if(prevTime > 0){
+            PrintToFND(prevTime);
+        }
+        /* code */
+        break;
+    case MODE_WEATHER:
+        /* code */
+        break;
+    case MODE_TIMER:
+        REMAIN_TIME = BEFORE_TIMER_SET;
+        PrintToFND(0);
+        break;
+    default:
+        break;
+    }
+}
+
 int main(void)
 {
-    init_TACTSW();
-
-    init_io(currentMode);
+    restore_output(currentMode);
     while (True)
     {
-        //1Frame(1 * 0.1s) = 0.1초 마다 스위치 감지
-        int SelectedMode = isModeChanged(currentMode);
+        // 1Frame(1 * 0.1s) = 0.1초 마다 스위치 감지
+        int TS_input =  ScanFromTS(currentMode);
+
+        int SelectedMode = isModeChanged(currentMode, TS_input);
         if (SelectedMode)
         {
             currentMode = SelectedMode;
-            close_io();
-            init_io(currentMode);
-            //모드 변경
+            // 모드 변경
+            init_mode(currentMode);
         }
 
         //10Frame(10 * 0.1s) = 1초 마다 기능 실행
@@ -54,12 +66,12 @@ int main(void)
             ClockFunction();
             break;
 
-        case MODE_WHEATHER:
+        case MODE_WEATHER:
             WeatherFunction();
             break;
 
         case MODE_TIMER:
-            TimerFunction();
+            TimerFunction(TS_input);
             break;
 
         default:
@@ -67,28 +79,30 @@ int main(void)
         }
 
         usleep(100 * MS); //100ms = 0.1s
+
     }
     return 0;
 }
 
 void ClockFunction()
 {
+    restore_output(MODE_CLOCK);
     if (FrameCount > 9)
     {
         FrameCount = 0;
 
-        char Message[MAXCHR] = "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEF";
-        PrintToCLCD(Message);
+        // char Message[] = "Clock Mode";
+        // PrintToCLCD(Message);
 
         time_t t = time(NULL);
         struct tm tm = *localtime(&t);
 
-        if (prevMin != tm.tm_min)
+        if (prevTime % 100 != tm.tm_min)
         {
             int Now = tm.tm_hour * 100 + tm.tm_min;
             PrintToFND(Now);
             printf("now: %d\n", Now);
-            prevMin = tm.tm_min;
+            prevTime = Now;
         }
     }
     else
@@ -99,6 +113,7 @@ void ClockFunction()
 
 void WeatherFunction()
 {
+    restore_output(MODE_WEATHER);
     if (FrameCount > 9)
     {
         printf("\nWeather Function, Weather Value : %d \n", WeatherValue);
@@ -126,20 +141,10 @@ void WeatherFunction()
             printf("weather is %d\n", WeatherValue);
             // CLCD 날씨 출력******************************************
             // 날씨 애니메이션 출력 *********************************8*
+            // char Message[] = "Today Weather is ";
+            // PrintToCLCD(Message);
 
-            Drawable dFrame_1 = {.type = TYPE_Points, .Points = &EMOTICONS[WeatherValue]};
-            Drawable dFrame_2 = {.type = TYPE_Points, .Points = &EMOTICONS[WeatherValue + 1]};
-
-            RenderQueue Frame1, Frame2;
-
-            Initialize(&Frame1);
-            Initialize(&Frame2);
-
-            InsertFront(&Frame1, dFrame_1);
-            InsertFront(&Frame2, dFrame_2);
-
-            // DOT_Draw_Canvas() ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            
+            playEmoticon(WeatherValue);
         }
 
         FrameCount = 0;
@@ -150,36 +155,43 @@ void WeatherFunction()
     }
 }
 
-void TimerFunction()
+void TimerFunction(int TS_input)
 {
-    int inputValue = GetTimerSetValue();
+    restore_output(MODE_TIMER);
+    int TimerInput = GetTimerSetValue(TS_input);
     if (REMAIN_TIME == BEFORE_TIMER_SET)
     {
         //타이머 안도는중 -> 시간 세팅받기
-        if (inputValue == TIMER_OK_COMMAND)
+        if (TimerInput == TIMER_OK_COMMAND)
         {
-            // 타이머 시작
-            REMAIN_TIME = DigitsToDec(TIMER_INPUT, 4); // 버퍼 이동
-            InitDigitsArray(TIMER_INPUT, 4);           //초기화
+            int TimeValue = DigitsToDec(TIMER_INPUT, 4);
+            if(TimeValue > 0){
+                printf("Timer Start \n");
+                // 타이머 시작
+                REMAIN_TIME = TimeValue; // 버퍼 이동
+                InitDigitsArray(TIMER_INPUT, 4);           //초기화
+            }
             return;
         }
         else
         {
-            if (inputValue == 10 || inputValue == 12)
+            if (TimerInput == MODE_CLOCK || TimerInput == MODE_WEATHER || TimerInput == 0)
             {
                 return; //쓰레기값 거르기
             }
+            printf("Timer Input \n");
 
             // 입력 계속받기 inputValue : 1 2 3 4 5 6 7 8 9
             if (TIMER_INPUT[3] != -1)
             {
                 int i; // i : 3 2 1
-                for (i = 3; i > 0; i--)
+                for (i = 0; i < 3; i++)
                 {
-                    TIMER_INPUT[i] = TIMER_INPUT[i - 1];
+                    TIMER_INPUT[i] = TIMER_INPUT[i + 1];
                 }
-                TIMER_INPUT[0] = inputValue;
+                TIMER_INPUT[3] = TimerInput;
                 //넘치면 밀어내기
+                PrintToFND(DigitsToDec(TIMER_INPUT, 4));
             }
             else
             {
@@ -191,7 +203,8 @@ void TimerFunction()
                         break;
                     }
                 }
-                TIMER_INPUT[i] = inputValue;
+                TIMER_INPUT[i] = TimerInput;
+                PrintToFND(DigitsToDec(TIMER_INPUT, 4));
                 //들어갈 자리에 넣기
             }
 
@@ -202,8 +215,9 @@ void TimerFunction()
     else
     {
         //타이머 도는중 -> 끝났는지 확인하기, 캔슬입력 받기
-        if (inputValue == TIMER_OK_COMMAND)
+        if (TimerInput == TIMER_OK_COMMAND)
         {
+            printf("Timer Cancle\n");
             //타이머 캔슬
             //초기화
             REMAIN_TIME = BEFORE_TIMER_SET;
@@ -211,8 +225,11 @@ void TimerFunction()
 
             //TODO 0000출력 ****************************************************
             // CLCD "시간을 입력하고 OK 입력해주세요."
+            // char Message[] = "Timer Cancled. Please Input Time";
+            // PrintToCLCD(Message);
             // 여기에 코드 입력
             PrintToConsole(0);
+            PrintToFND(0);
             return;
         }
 
@@ -221,11 +238,19 @@ void TimerFunction()
             //타이머 도는중
             if (FrameCount > 9)
             {
+                printf("Timer Count Down \n");
                 FrameCount = 0;
                 // 1초마다 실행
                 REMAIN_TIME--;
                 //************************* 출력 ******************************
+                // char Message[] = "Timer Count Down";
+                // PrintToCLCD(Message);
                 PrintToConsole(REMAIN_TIME);
+                PrintToFND(REMAIN_TIME);
+            }
+            else
+            {
+                FrameCount++;
             }
         }
         else
@@ -233,27 +258,30 @@ void TimerFunction()
             //타이머 OVER
             if (FrameCount > 9)
             {
+                printf("Time OVER \n");
                 FrameCount = 0;
                 // 1초마다 실행
 
                 //************************* 출력 ******************************
                 // CLCD "OK 눌러주세요"
+                // char Message[] = "Time Over. please push OK";
+                // PrintToCLCD(Message);
                 // 타이머 오버 출력
+            }
+            else
+            {
+                FrameCount++;
             }
         }
     }
 }
 
-int isModeChanged(unsigned char currentMode)
+int isModeChanged(unsigned char currentMode, int TS_input)
 {
-    unsigned char ModeValue;
-
-    ModeValue = ScanFromTS();
-
-    if (ModeValue != currentMode && (ModeValue == MODE_CLOCK || ModeValue == MODE_WHEATHER || ModeValue == MODE_TIMER))
+    if (TS_input != currentMode && (TS_input == MODE_CLOCK || TS_input == MODE_WEATHER || TS_input == MODE_TIMER))
     {
-        printf("MODE CHANGE current : %d, Change To : %d \n", currentMode, ModeValue);
-        return ModeValue;
+        printf("MODE CHANGE current : %d, Change To : %d \n", currentMode, TS_input);
+        return TS_input;
     }
     else
     {
@@ -263,12 +291,23 @@ int isModeChanged(unsigned char currentMode)
 
 int DigitsToDec(int Value[], int len)
 {
-    int i;
+    int NumSize, i;
     int value = 0;
-    for (i = 0; i < len; i++)
+    for (NumSize = 0; NumSize < len; NumSize++)
     {
-        value += Value[i] * pow(10, i);
+        if (Value[NumSize] == -1)
+        {
+            break;
+        }
     }
+
+    NumSize--;
+    for (i = 0; i <= NumSize; i++)
+    {
+        value += Value[i] * pow(10, NumSize - i);
+        printf("DigitsToDec : current value : %d\n", value);
+    }
+
     return value;
 }
 void InitDigitsArray(int Value[], int len)
@@ -279,13 +318,21 @@ void InitDigitsArray(int Value[], int len)
         Value[i] = -1;
     }
 }
-int GetTimerSetValue()
+int GetTimerSetValue(int TS_input)
 {
-    int TimeValue;
+    int InputValue;
+    InputValue = TS_input;
 
-    TimeValue = ScanFromTS();
+    if (prevTactSwitchInput == InputValue)
+    {
+        InputValue = 0;
+    }
+    else
+    {
+        prevTactSwitchInput = InputValue;
+    }
 
-    return TimeValue;
+    return InputValue;
 }
 
 void GetWeatherAsync()
@@ -311,7 +358,7 @@ void GetWeatherAsync()
     {
         //child
         printf("Get Weather data Async\n");
-        int getValue = GetWeather();
+        int getValue = GetWeather(); // -1 or 1 이상의 값
         write(GET_WEATHER_ASYNC_FD[1], &getValue, sizeof(int));
         printf("Data Arrived : %d, Process Exit\n", getValue);
         exit(0);
@@ -322,17 +369,3 @@ void GetWeatherAsync()
         WeatherValue = DOWNLOADING;
     }
 }
-
-// printf("Timer Function\n");
-
-//     int n = 0, count = 0;
-//     int iCount = 0;
-//     unsigned char buf[MAXFND];
-
-//     // 4자리수에 각각 입력 될 숫자 입력
-//     int digit;
-
-//     // 4자리수에 각각 입력 될 숫자 입력
-//     PrintToFND(digit);
-//     // 적절한 delay 사용
-//     iCount = (iCount + 1) % 10000;

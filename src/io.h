@@ -14,7 +14,7 @@
 #define MAXDIGHT 10
 
 unsigned char asc_to_fnd(int n);
-void init_io(int MODE);
+void restore_output(int MODE);
 void close_io();
 void init_FND();
 void init_CLCD();
@@ -23,7 +23,7 @@ void init_DOT();
 
 void PrintToFND(int digit_4);
 void PrintToCLCD(char *s);
-void PrintToDOT();
+void PrintToDOT(unsigned char *Frame);
 void PrintToConsole(int n);
 void ScanFromDS();
-unsigned char ScanFromTS();
+unsigned char ScanFromTS(int currentMode);

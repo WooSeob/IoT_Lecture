@@ -3,22 +3,18 @@
 
 int FND_FD = -1, DOT_FD = -1, CLCD_FD = -1, DS_FD = -1, TACTSW_FD = -1;
 
-void init_io(int MODE)
+void restore_output(int MODE)
 {
     switch (MODE)
     {
     case MODE_CLOCK:
         init_FND();
-        init_CLCD();
         break;
-    case MODE_WHEATHER:
-        init_FND();
+    case MODE_WEATHER:
         init_DOT();
-        init_CLCD();
         break;
     case MODE_TIMER:
         init_FND();
-        init_CLCD();
         break;
     default:
         break;
@@ -30,15 +26,22 @@ void close_io()
     if (FND_FD >= 0)
     {
         close(FND_FD);
+        FND_FD = -1;
     }
-
     if (CLCD_FD >= 0)
     {
         close(CLCD_FD);
+        CLCD_FD = -1;
     }
     if (DOT_FD >= 0)
     {
         close(DOT_FD);
+        DOT_FD = -1;
+    }
+    if (TACTSW_FD >= 0)
+    {
+        close(TACTSW_FD);
+        TACTSW_FD = -1;
     }
 }
 
@@ -69,13 +72,15 @@ void init_TACTSW()
         exit(-1);
     }
 }
-void init_DOT(){
+void init_DOT()
+{
     DOT_FD = open(dot_dev, O_RDWR);
     if (DOT_FD < 0)
     {
         perror("opening DOT failure\n");
         exit(-1);
     }
+    printf("init_DOT\n");
 }
 unsigned char asc_to_fnd(int n)
 {
@@ -93,6 +98,7 @@ unsigned char asc_to_fnd(int n)
 
 void PrintToFND(int digit_4)
 {
+    init_FND();
     unsigned char Hex_Code[MAXFND];
     memset(Hex_Code, 0x00, sizeof(Hex_Code));
 
@@ -105,41 +111,56 @@ void PrintToFND(int digit_4)
         Hex_Code[i - 1] = asc_to_fnd(Num);
     }
     write(FND_FD, Hex_Code, MAXFND);
+    // close_io();
 }
 
 void PrintToCLCD(char *s)
 {
+    init_CLCD();
     int n;
     char buf[MAXCHR];
     memset(buf, 0, sizeof(buf));
-    printf("buf : %s\n", buf);  
+    printf("buf : %s\n", buf);
 
     n = strlen(s);
     if (n > MAXCHR)
-         n = MAXCHR; //plus the newline
+        n = MAXCHR; //plus the newline
     // printf("n : %d\n", n);
-    
+
     memcpy(buf, s, n);
-    // printf("buf : %s\n", buf);  
-    
+    // printf("buf : %s\n", buf);
+
     // printf("clcd fd : %d\n", CLCD_FD);
     write(CLCD_FD, buf, MAXCHR);
+    // close_io();
 }
 
-void PrintToDOT()
+void PrintToDOT(unsigned char *Frame)
 {
+    init_DOT();
+    // write(DOT_FD, Frame, 8);
+    // unsigned char f[8] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+    write(DOT_FD, Frame, 8);
+    // close_io();
 }
 
-void PrintToConsole(int n){
+void PrintToConsole(int n)
+{
     printf("Print : %d\n", n);
 }
 void ScanFromDS()
 {
 }
 
-unsigned char ScanFromTS()
+unsigned char ScanFromTS(int currentMode)
 {
+    close_io();
+    init_TACTSW();
+
     unsigned char readData;
     read(TACTSW_FD, &readData, 2);
+
+    close_io();
+    // restore_output(currentMode);
     return readData;
 }

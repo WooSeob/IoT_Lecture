@@ -1,64 +1,88 @@
-#include <stdio.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <sys/wait.h>
-
-#include "Dot_graphic_library.h"
-#include "Lib.h"
+#include "emoticon.h"
 
 #define TEST_SIZE 5
 
-int main(void)
+Point SUNNY_1[60] = {{.X = 0, .Y = 1}, {.X = 0, .Y = 2}, {.X = 0, .Y = 3}, {.X = 0, .Y = 4}, {.X = 0, .Y = 5}, {.X = 0, .Y = 6}, {.X = 1, .Y = 0}, {.X = 1, .Y = 1}, {.X = 1, .Y = 2}, {.X = 1, .Y = 3}, {.X = 1, .Y = 4}, {.X = 1, .Y = 5}, {.X = 1, .Y = 6}, {.X = 1, .Y = 7}, {.X = 2, .Y = 0}, {.X = 2, .Y = 1}, {.X = 2, .Y = 2}, {.X = 2, .Y = 3}, {.X = 2, .Y = 4}, {.X = 2, .Y = 5}, {.X = 2, .Y = 6}, {.X = 2, .Y = 7}, {.X = 3, .Y = 0}, {.X = 3, .Y = 1}, {.X = 3, .Y = 2}, {.X = 3, .Y = 3}, {.X = 3, .Y = 4}, {.X = 3, .Y = 5}, {.X = 3, .Y = 6}, {.X = 3, .Y = 7}, {.X = 4, .Y = 0}, {.X = 4, .Y = 1}, {.X = 4, .Y = 2}, {.X = 4, .Y = 3}, {.X = 4, .Y = 4}, {.X = 4, .Y = 5}, {.X = 4, .Y = 6}, {.X = 4, .Y = 7}, {.X = 5, .Y = 0}, {.X = 5, .Y = 1}, {.X = 5, .Y = 2}, {.X = 5, .Y = 3}, {.X = 5, .Y = 4}, {.X = 5, .Y = 5}, {.X = 5, .Y = 6}, {.X = 5, .Y = 7}, {.X = 6, .Y = 0}, {.X = 6, .Y = 1}, {.X = 6, .Y = 2}, {.X = 6, .Y = 3}, {.X = 6, .Y = 4}, {.X = 6, .Y = 5}, {.X = 6, .Y = 6}, {.X = 6, .Y = 7}, {.X = 7, .Y = 1}, {.X = 7, .Y = 2}, {.X = 7, .Y = 3}, {.X = 7, .Y = 4}, {.X = 7, .Y = 5}, {.X = 7, .Y = 6}};
+//맑음2
+Point SUNNY_2[32] = {{.X = 1, .Y = 2}, {.X = 1, .Y = 3}, {.X = 1, .Y = 4}, {.X = 1, .Y = 5}, {.X = 2, .Y = 1}, {.X = 2, .Y = 2}, {.X = 2, .Y = 3}, {.X = 2, .Y = 4}, {.X = 2, .Y = 5}, {.X = 2, .Y = 6}, {.X = 3, .Y = 1}, {.X = 3, .Y = 2}, {.X = 3, .Y = 3}, {.X = 3, .Y = 4}, {.X = 3, .Y = 5}, {.X = 3, .Y = 6}, {.X = 4, .Y = 1}, {.X = 4, .Y = 2}, {.X = 4, .Y = 3}, {.X = 4, .Y = 4}, {.X = 4, .Y = 5}, {.X = 4, .Y = 6}, {.X = 5, .Y = 1}, {.X = 5, .Y = 2}, {.X = 5, .Y = 3}, {.X = 5, .Y = 4}, {.X = 5, .Y = 5}, {.X = 5, .Y = 6}, {.X = 6, .Y = 2}, {.X = 6, .Y = 3}, {.X = 6, .Y = 4}, {.X = 6, .Y = 5}};
+
+//구름많음1
+Point CLOUDY_1[19] = {{.X = 0, .Y = 0}, {.X = 0, .Y = 1}, {.X = 0, .Y = 6}, {.X = 1, .Y = 0}, {.X = 1, .Y = 5}, {.X = 2, .Y = 4}, {.X = 2, .Y = 5}, {.X = 3, .Y = 5}, {.X = 3, .Y = 6}, {.X = 4, .Y = 6}, {.X = 4, .Y = 7}, {.X = 4, .Y = 1}, {.X = 4, .Y = 2}, {.X = 5, .Y = 0}, {.X = 5, .Y = 1}, {.X = 5, .Y = 2}, {.X = 5, .Y = 3}, {.X = 6, .Y = 1}, {.X = 6, .Y = 2}};
+//구름많음2
+Point CLOUDY_2[18] = {{.X = 0, .Y = 0}, {.X = 0, .Y = 1}, {.X = 0, .Y = 2}, {.X = 0, .Y = 3}, {.X = 1, .Y = 1}, {.X = 1, .Y = 2}, {.X = 1, .Y = 7}, {.X = 2, .Y = 6}, {.X = 2, .Y = 7}, {.X = 3, .Y = 7}, {.X = 4, .Y = 3}, {.X = 4, .Y = 4}, {.X = 5, .Y = 2}, {.X = 5, .Y = 3}, {.X = 5, .Y = 4}, {.X = 5, .Y = 5}, {.X = 6, .Y = 3}, {.X = 6, .Y = 4}};
+
+//비1
+Point RAIN_1[20] = {{.X = 0, .Y = 0}, {.X = 0, .Y = 1}, {.X = 0, .Y = 4}, {.X = 0, .Y = 5}, {.X = 0, .Y = 6}, {.X = 2, .Y = 2}, {.X = 2, .Y = 3}, {.X = 2, .Y = 5}, {.X = 2, .Y = 6}, {.X = 2, .Y = 7}, {.X = 4, .Y = 0}, {.X = 4, .Y = 1}, {.X = 4, .Y = 4}, {.X = 4, .Y = 5}, {.X = 4, .Y = 6}, {.X = 6, .Y = 2}, {.X = 6, .Y = 3}, {.X = 6, .Y = 5}, {.X = 6, .Y = 6}, {.X = 6, .Y = 7}};
+
+//비2
+Point RAIN_2[20] = {{.X = 1, .Y = 0}, {.X = 1, .Y = 1}, {.X = 1, .Y = 4}, {.X = 1, .Y = 5}, {.X = 1, .Y = 6}, {.X = 3, .Y = 2}, {.X = 3, .Y = 3}, {.X = 3, .Y = 5}, {.X = 3, .Y = 6}, {.X = 3, .Y = 7}, {.X = 5, .Y = 0}, {.X = 5, .Y = 1}, {.X = 5, .Y = 4}, {.X = 5, .Y = 5}, {.X = 5, .Y = 6}, {.X = 7, .Y = 2}, {.X = 7, .Y = 3}, {.X = 7, .Y = 5}, {.X = 7, .Y = 6}, {.X = 7, .Y = 7}};
+
+//비&눈1
+Point RAIN_SNOW_1[19] = {{.X = 0, .Y = 0}, {.X = 0, .Y = 1}, {.X = 0, .Y = 4}, {.X = 0, .Y = 5}, {.X = 0, .Y = 6}, {.X = 2, .Y = 3}, {.X = 2, .Y = 6}, {.X = 2, .Y = 7}, {.X = 3, .Y = 2}, {.X = 3, .Y = 3}, {.X = 3, .Y = 4}, {.X = 4, .Y = 0}, {.X = 4, .Y = 1}, {.X = 4, .Y = 3}, {.X = 6, .Y = 2}, {.X = 6, .Y = 3}, {.X = 6, .Y = 5}, {.X = 6, .Y = 6}, {.X = 6, .Y = 7}};
+
+//비&눈2
+
+Point RAIN_SNOW_2[19] = {{.X = 1, .Y = 0}, {.X = 1, .Y = 1}, {.X = 1, .Y = 4}, {.X = 1, .Y = 5}, {.X = 1, .Y = 6}, {.X = 3, .Y = 4}, {.X = 3, .Y = 6}, {.X = 3, .Y = 7}, {.X = 4, .Y = 3}, {.X = 4, .Y = 4}, {.X = 4, .Y = 5}, {.X = 5, .Y = 0}, {.X = 5, .Y = 1}, {.X = 5, .Y = 4}, {.X = 7, .Y = 2}, {.X = 7, .Y = 3}, {.X = 7, .Y = 5}, {.X = 7, .Y = 6}, {.X = 7, .Y = 7}};
+
+//눈1
+Point SNOW_1[15] = {{.X = 0, .Y = 1},
+                    {.X = 1, .Y = 0},
+                    {.X = 1, .Y = 1},
+                    {.X = 1, .Y = 2},
+                    {.X = 2, .Y = 1},
+                    {.X = 2, .Y = 6},
+                    {.X = 3, .Y = 5},
+                    {.X = 3, .Y = 6},
+                    {.X = 3, .Y = 7},
+                    {.X = 4, .Y = 6},
+                    {.X = 5, .Y = 2},
+                    {.X = 6, .Y = 1},
+                    {.X = 6, .Y = 2},
+                    {.X = 6, .Y = 3},
+                    {.X = 7, .Y = 2}};
+
+//눈2
+Point SNOW_2[14] = {
+    {.X = 1, .Y = 2},
+    {.X = 2, .Y = 1},
+    {.X = 2, .Y = 2},
+    {.X = 2, .Y = 3},
+    {.X = 3, .Y = 2},
+    {.X = 3, .Y = 7},
+    {.X = 4, .Y = 6},
+    {.X = 4, .Y = 7},
+    {.X = 5, .Y = 4},
+    {.X = 5, .Y = 7},
+    {.X = 6, .Y = 3},
+    {.X = 6, .Y = 4},
+    {.X = 6, .Y = 5},
+    {.X = 7, .Y = 4},
+};
+
+Points EMOTICONS[10] = {{.points = SUNNY_1, .len = 60}, {.points = SUNNY_2, .len = 32}, {.points = CLOUDY_1, .len = 19}, {.points = CLOUDY_2, .len = 18}, {.points = RAIN_1, .len = 20}, {.points = RAIN_2, .len = 20}, {.points = RAIN_SNOW_1, .len = 19}, {.points = RAIN_SNOW_2, .len = 19}, {.points = SNOW_1, .len = 15}, {.points = SNOW_2, .len = 14}};
+int AnimationFrame = 0;
+
+void playEmoticon(int Weather)
 {
-    init();
+    int EmoticonOffset = (Weather-1) * 2;
+    Drawable dFrame_1 = {.type = TYPE_Points, .Points = &EMOTICONS[EmoticonOffset]};
+    Drawable dFrame_2 = {.type = TYPE_Points, .Points = &EMOTICONS[EmoticonOffset + 1]};
 
-    RenderQueue renderQueue;
-    Initialize(&renderQueue);
+    RenderQueue Frame1, Frame2;
 
-    Line line1 = {.start = {.X = 5, .Y = 1}, .stop = {.X = 2, .Y = 4}};
-    Drawable dLine = {.type = TYPE_Line, .line = &line1};
+    Initialize(&Frame1);
+    Initialize(&Frame2);
 
-    Circle circle1 = {.center = {.X = 3, .Y = 4}, .radius = 2};
-    Drawable dCircle = {.type = TYPE_Circle, .circle = &circle1};
+    InsertFront(&Frame1, &dFrame_1);
+    InsertFront(&Frame2, &dFrame_2);
 
-    Line line2 = {.start = {.X = 1, .Y = 1}, .stop = {.X = 4, .Y = 4}};
-    Drawable dLine2 = {.type = TYPE_Line, .line = &line2};
-
-    // Point points[3] = {{.X = 3, .Y = 3}, {.X = 2, .Y = 2}, {.X = 4, .Y = 5}};
-    // Points pointGroup = {.points = points, .len = 3};
-    // SetPoints(&pointGroup);
-    // Drawable dPoints = {.type = TYPE_Points, .Points = &pointGroup};
-
-    Point points[1] = {{.X = 4, .Y = 4}};
-    Points pointGroup = {.points = points, .len = 1};
-    SetPoints(&pointGroup);
-    Drawable dPointOnlyOne = {.type = TYPE_Points, .Points = &pointGroup};
-
-    // InsertFront(&renderQueue, &dPoints);
-    // InsertFront(&renderQueue, &dLine);
-    // InsertFront(&renderQueue, &dCircle);
-    // InsertFront(&renderQueue, &dLine2);
-    InsertFront(&renderQueue, &dPointOnlyOne);
-
-
-    int dX = 1;
-    int dY = 1;
-    while(1){
-        DOT_Draw_Canvas(&renderQueue);
-        
-        if(isX_Out(pointGroup.right_bottom.X) || isX_Out(pointGroup.left_top.X)){
-            dX = -dX;
-        }
-        if(isY_Out(pointGroup.right_bottom.Y) || isY_Out(pointGroup.left_top.Y)){
-            dY = -dY;
-        }
-        MovePoints(&pointGroup, dX, dY);
-
-        
-        usleep(160000);
+    if (AnimationFrame % 2 == 0)
+    {
+        DOT_Draw_Canvas(&Frame1);
     }
-
-    Clear(&renderQueue);
-    return 0;
+    else
+    {
+        DOT_Draw_Canvas(&Frame2);
+    }
+    AnimationFrame++;
 }
