@@ -1,17 +1,17 @@
 
 #include "project.h"
 
-// #include "Dot_graphic_library.h"
-// #include "Lib.h"
-
 #define BEFORE_DOWNLOAD -1000
 #define DOWNLOADING -4000
 #define DOWNLOAD_FAILURE -1
 
 #define BEFORE_TIMER_SET -10
 
+
+int EMOTICON_TIMER_MOVE = 0;
+
 int prevTime = -1;
-int currentMode = MODE_WEATHER;
+int currentMode = MODE_CLOCK;
 int FrameCount = 0;
 int WeatherValue = BEFORE_DOWNLOAD;
 int GET_WEATHER_ASYNC_FD[2];
@@ -30,11 +30,14 @@ void init_mode(int mode){
             PrintToFND(prevTime);
         }
         /* code */
+        PrintToCLCD("Clock Mode");
         break;
     case MODE_WEATHER:
         /* code */
+        PrintToCLCD("Weather Mode");
         break;
     case MODE_TIMER:
+        PrintToCLCD("Clock Mode");
         REMAIN_TIME = BEFORE_TIMER_SET;
         PrintToFND(0);
         break;
@@ -63,11 +66,11 @@ int main(void)
         switch (currentMode)
         {
         case MODE_CLOCK:
-            ClockFunction();
+            ClockFunction(TS_input);
             break;
 
         case MODE_WEATHER:
-            WeatherFunction();
+            WeatherFunction(TS_input);
             break;
 
         case MODE_TIMER:
@@ -84,15 +87,12 @@ int main(void)
     return 0;
 }
 
-void ClockFunction()
+void ClockFunction(int TS_input)
 {
     restore_output(MODE_CLOCK);
     if (FrameCount > 9)
     {
         FrameCount = 0;
-
-        // char Message[] = "Clock Mode";
-        // PrintToCLCD(Message);
 
         time_t t = time(NULL);
         struct tm tm = *localtime(&t);
@@ -111,10 +111,17 @@ void ClockFunction()
     }
 }
 
-void WeatherFunction()
+void WeatherFunction(int TS_input)
 {
     restore_output(MODE_WEATHER);
-    if (FrameCount > 9)
+    // 프로그램 시연을 위해 임의로 날씨 선택가능
+    if(TS_input >= 1 && TS_input <= 5){
+        // 1: 맑음, 2: 흐림, 3: 비, 4: 비&눈, 5: 눈
+        WeatherValue = TS_input;
+    }
+
+    // 0.7초마다 이모티콘 그림 갱신
+    if (FrameCount > 6)
     {
         printf("\nWeather Function, Weather Value : %d \n", WeatherValue);
         if (WeatherValue == BEFORE_DOWNLOAD)
@@ -139,14 +146,9 @@ void WeatherFunction()
         {
             // 날씨정보 받아오기 성공
             printf("weather is %d\n", WeatherValue);
-            // CLCD 날씨 출력******************************************
-            // 날씨 애니메이션 출력 *********************************8*
-            // char Message[] = "Today Weather is ";
-            // PrintToCLCD(Message);
-
+            // 날씨 애니메이션 출력 
             playEmoticon(WeatherValue);
         }
-
         FrameCount = 0;
     }
     else
@@ -207,8 +209,6 @@ void TimerFunction(int TS_input)
                 PrintToFND(DigitsToDec(TIMER_INPUT, 4));
                 //들어갈 자리에 넣기
             }
-
-            //Interaction 눌른대로 현재 값 출력해주기 *******************************************
             PrintToConsole(DigitsToDec(TIMER_INPUT, 4));
         }
     }
@@ -218,16 +218,10 @@ void TimerFunction(int TS_input)
         if (TimerInput == TIMER_OK_COMMAND)
         {
             printf("Timer Cancle\n");
-            //타이머 캔슬
-            //초기화
+            //타이머 캔슬 -> 초기화
+            EMOTICON_TIMER_MOVE = 0;
             REMAIN_TIME = BEFORE_TIMER_SET;
             InitDigitsArray(TIMER_INPUT, 4);
-
-            //TODO 0000출력 ****************************************************
-            // CLCD "시간을 입력하고 OK 입력해주세요."
-            // char Message[] = "Timer Cancled. Please Input Time";
-            // PrintToCLCD(Message);
-            // 여기에 코드 입력
             PrintToConsole(0);
             PrintToFND(0);
             return;
@@ -238,15 +232,12 @@ void TimerFunction(int TS_input)
             //타이머 도는중
             if (FrameCount > 9)
             {
-                printf("Timer Count Down \n");
-                FrameCount = 0;
                 // 1초마다 실행
+                printf("Timer Count Down \n");
                 REMAIN_TIME--;
-                //************************* 출력 ******************************
-                // char Message[] = "Timer Count Down";
-                // PrintToCLCD(Message);
                 PrintToConsole(REMAIN_TIME);
                 PrintToFND(REMAIN_TIME);
+                FrameCount = 0;
             }
             else
             {
@@ -255,23 +246,26 @@ void TimerFunction(int TS_input)
         }
         else
         {
-            //타이머 OVER
-            if (FrameCount > 9)
-            {
-                printf("Time OVER \n");
-                FrameCount = 0;
-                // 1초마다 실행
+            printf("Time OVER \n");
+            
 
-                //************************* 출력 ******************************
-                // CLCD "OK 눌러주세요"
-                // char Message[] = "Time Over. please push OK";
-                // PrintToCLCD(Message);
-                // 타이머 오버 출력
+            playTimeover(EMOTICON_TIMER_MOVE);
+            if(EMOTICON_TIMER_MOVE==0){
+                EMOTICON_TIMER_MOVE++;
             }
-            else
-            {
+            if(EMOTICON_TIMER_MOVE > 64){
+                    EMOTICON_TIMER_MOVE = 0;
+            }else{
+                    EMOTICON_TIMER_MOVE++;
+            } 
+
+            if(FrameCount > 4){
+                
+                FrameCount = 0;
+            }else{
                 FrameCount++;
             }
+            //타이머 OVER
         }
     }
 }

@@ -21,6 +21,32 @@
 //         printf("Can't Open Device\n");
 //     }
 // }
+void SetPointsByLeftTop(Points *pointGroup, CoordValue X, CoordValue Y){
+    int offsetX, offsetY;
+    Point lt = pointGroup->left_top;
+    offsetX = X - lt.X;
+    offsetY = Y - lt.Y;
+    MovePoints(pointGroup, offsetX, offsetY);
+}
+
+void SetPointsByCenter(Points *pointGroup, CoordValue X, CoordValue Y){
+    int offsetX, offsetY;
+    Point lt = pointGroup->left_top;
+    Point rb = pointGroup->right_bottom;
+
+    int centerX = (lt.X + rb.X)/2;
+    int centerY = (lt.Y + rb.Y)/2;
+    printf("centerX : %d, centerY : %d To X : %d, Y : %d\n", centerX, centerY, X, Y);
+
+    offsetX = X - centerX;
+    offsetY = Y - centerY;
+    printf("offsetX : %d, offsetY : %d\n", offsetX, offsetY);
+    MovePoints(pointGroup, offsetX, offsetY);
+
+    centerX = (pointGroup->left_top.X + pointGroup->right_bottom.X)/2;
+    centerY = (pointGroup->left_top.Y + pointGroup->right_bottom.Y)/2;
+    printf("now centerX : %d, centerY : %d\n", centerX, centerY);
+}
 
 void MovePoints(Points *pointGroup, CoordValue offsetX, CoordValue offsetY){
     int i;
@@ -39,6 +65,7 @@ void MovePoints(Points *pointGroup, CoordValue offsetX, CoordValue offsetY){
     rb.X += offsetX;
     rb.Y += offsetY;
     pointGroup->right_bottom = rb;
+    SetPoints(pointGroup);
 }
 
 void SetPoints(Points *pointGroup){
@@ -54,7 +81,7 @@ void SetPoints(Points *pointGroup){
         if(Xmin > P[i].X){
             Xmin = P[i].X;
         }
-        if(Ymax > P[i].Y){
+        if(Ymax < P[i].Y){
             Ymax = P[i].Y;
         }
         if(Ymin > P[i].Y){

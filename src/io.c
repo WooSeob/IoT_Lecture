@@ -98,6 +98,7 @@ unsigned char asc_to_fnd(int n)
 
 void PrintToFND(int digit_4)
 {
+    close_io();
     init_FND();
     unsigned char Hex_Code[MAXFND];
     memset(Hex_Code, 0x00, sizeof(Hex_Code));
@@ -111,7 +112,6 @@ void PrintToFND(int digit_4)
         Hex_Code[i - 1] = asc_to_fnd(Num);
     }
     write(FND_FD, Hex_Code, MAXFND);
-    // close_io();
 }
 
 void PrintToCLCD(char *s)
@@ -125,23 +125,16 @@ void PrintToCLCD(char *s)
     n = strlen(s);
     if (n > MAXCHR)
         n = MAXCHR; //plus the newline
-    // printf("n : %d\n", n);
 
     memcpy(buf, s, n);
-    // printf("buf : %s\n", buf);
-
-    // printf("clcd fd : %d\n", CLCD_FD);
     write(CLCD_FD, buf, MAXCHR);
-    // close_io();
 }
 
 void PrintToDOT(unsigned char *Frame)
 {
+    close_io();
     init_DOT();
-    // write(DOT_FD, Frame, 8);
-    // unsigned char f[8] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
     write(DOT_FD, Frame, 8);
-    // close_io();
 }
 
 void PrintToConsole(int n)
@@ -156,11 +149,9 @@ unsigned char ScanFromTS(int currentMode)
 {
     close_io();
     init_TACTSW();
-
     unsigned char readData;
     read(TACTSW_FD, &readData, 2);
-
     close_io();
-    // restore_output(currentMode);
     return readData;
 }
+

@@ -1,7 +1,5 @@
 #include "weather.h"
 
-
-
 int GetWeather()
 {
     int fd[2];
@@ -60,17 +58,26 @@ int GetWeather()
                     if (i == len - 1)
                     {
                         // 찾음
-                        // printf("Tag Searched\n");
-                        // printf("%s\n", Searched);
-
+                        printf("weather.c > find : %s\n", Searched);
                         if (!strcmp(Searched, W_CLEAR))
                         {
                             return WEATHER_SUNNY;
                         }
-                        else if (!strcmp(Searched, W_CLOUDY))
+                        else if (!strcmp(Searched, W_CLOUDY) || !strcmp(Searched, W_MCLOUDY) || !strcmp(Searched, W_PCLOUDY))
                         {
                             return WEATHER_CLOUDY;
-                            // ...
+                        }
+                        else if (!strcmp(Searched, W_RAIN))
+                        {
+                            return WEATHER_RAINY;
+                        }
+                        else if (!strcmp(Searched, W_SNOW))
+                        {
+                            return WEATHER_SNOWY;
+                        }
+                        else if (!strcmp(Searched, W_RAIN_SNOW))
+                        {
+                            return WEATHER_RAIN_AND_SNOW;
                         }
                     }
                 }
@@ -82,7 +89,7 @@ int GetWeather()
 
             ptr = strtok(NULL, "\n"); //자른 문자 다음부터 구분자 또 찾기
         }
-
+        //검색 실패
         return -1;
     }
     return 0;

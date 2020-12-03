@@ -8,3 +8,4 @@
 #include "Lib.h"
 
 void playEmoticon(int Weather);
+void playTimeover(int FrameCnt);

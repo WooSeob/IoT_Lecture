@@ -68,6 +68,8 @@ typedef struct RenderQueue{
         {0, 0, 0, 0, 0, 0, 0, 0},\
     }\
 
+void SetPointsByLeftTop(Points *pointGroup, CoordValue X, CoordValue Y);
+void SetPointsByCenter(Points *pointGroup, CoordValue X, CoordValue Y);
 void MovePoints(Points *pointGroup, CoordValue offsetX, CoordValue offsetY);
 void SetPoints(Points *pointGroup);
 

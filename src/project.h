@@ -22,10 +22,10 @@
 #define True 1
 #define False 0
 
-void TimerFunction();
 int isModeChanged(unsigned char currentMode, int TS_input);
-void WeatherFunction();
-void ClockFunction();
+void TimerFunction(int TS_input);
+void WeatherFunction(int TS_input);
+void ClockFunction(int TS_input);
 void GetWeatherAsync();
 
 //맑음1
